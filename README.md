@@ -2,34 +2,45 @@
 
 Simple link short REST API
 
-# Install
+## Install
 
+Clone repository
 ```bash
 git clone git@github.com:koschos/gols.git
+```
+
+Install binary
+```bash
 go install github.com/koschos/gols
 ```
 
-# Configuration
+## Configuration
 
 TBD
 
 database name must be gols
 
-# Hasher
+## Hasher
 
 TBD
 
-# Slug generator
+## Slug generator
 
 TBD
 
-# Run
+## Run
 
 ```bash
 ./gols
 ```
 
-# Test
+## Run unit tests
+
+```bash
+go test
+```
+
+## Test manually
 
 ```bash
 curl -i -X POST http://localhost:8080/api/v1/short-link/ -d '{ "url": "http://test.com" }'
