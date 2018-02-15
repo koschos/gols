@@ -10,32 +10,6 @@ import (
 	"strings"
 )
 
-// Test that a GET request to the home page returns the home page with
-// the HTTP code 200 for an unauthenticated user
-func TestPingHandler(t *testing.T) {
-	r := gin.Default()
-
-	r.GET("/ping", pingHandler)
-
-	// Create a request to send to the above route
-	req, _ := http.NewRequest("GET", "/ping", nil)
-
-	// Create a response recorder
-	w := httptest.NewRecorder()
-
-	// Create the service and process the above request.
-	r.ServeHTTP(w, req)
-
-	// Test that the http status code is 200
-	if w.Code != http.StatusOK {
-		t.Error("status check failed")
-	}
-
-	expected := `{"status":"OK"}`
-	actual := w.Body.String()
-	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
-}
-
 func TestFetchLinkHandler(t *testing.T) {
 	r := gin.Default()
 
@@ -64,7 +38,8 @@ func TestFetchLinkHandler(t *testing.T) {
 func TestCreateLinkHandler(t *testing.T) {
 	r := gin.Default()
 
-	testApp := &App{&InMemoryRepository{[]linkModel{}}}
+	repository := &InMemoryRepository{[]linkModel{}}
+	testApp := &App{repository}
 
 	r.POST("/", testApp.createLink)
 
@@ -80,4 +55,6 @@ func TestCreateLinkHandler(t *testing.T) {
 	expected := `{"status":201,"data":{"slug":"slug","url":"http://test.com","url_hash":"hash"}}`
 	actual := w.Body.String()
 	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
+
+	assert.Len(t, repository.links, 1)
 }

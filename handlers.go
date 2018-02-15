@@ -10,10 +10,6 @@ type App struct {
 	linkRepository linkRepositoryInterface
 }
 
-func pingHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "OK"})
-}
-
 // create short link
 func (app *App) createLink(c *gin.Context) {
 	var link linkModel

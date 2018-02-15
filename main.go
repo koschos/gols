@@ -26,7 +26,6 @@ func main() {
 	}
 
 	router := gin.Default()
-	router.GET("/ping", pingHandler)
 
 	v1 := router.Group("/api/v1/short-link")
 	{
