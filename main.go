@@ -5,9 +5,12 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"fmt"
+	"github.com/koschos/gols/generators"
 )
 
 var db *gorm.DB
+
+const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 func init() {
 	//open a db connection
@@ -21,10 +24,7 @@ func init() {
 }
 
 func main() {
-	app := &App{
-		&OrmLinkRepository{*db},
-	}
-
+	app := createApp()
 	router := gin.Default()
 
 	v1 := router.Group("/api/v1/short-link")
@@ -33,4 +33,12 @@ func main() {
 		v1.GET("/:slug", app.fetchLink)
 	}
 	router.Run()
+}
+
+func createApp() *App {
+	return &App{
+		&OrmLinkRepository{*db},
+		&generators.RandomSlugGenerator{6, charset},
+		&generators.Md5HashGenerator{},
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/koschos/gols/mocks"
 	"github.com/gin-gonic/gin"
 	//"net/url"
 	"strings"
@@ -19,6 +20,8 @@ func TestFetchLinkHandler(t *testing.T) {
 
 	testApp := &App{
 		&InMemoryRepository{linkList},
+		&mocks.MockSlugGenerator{},
+		&mocks.MockHashGenerator{},
 	}
 
 	r.GET("/:slug", testApp.fetchLink)
@@ -39,7 +42,11 @@ func TestCreateLinkHandler(t *testing.T) {
 	r := gin.Default()
 
 	repository := &InMemoryRepository{[]linkModel{}}
-	testApp := &App{repository}
+	testApp := &App{
+		repository,
+		&mocks.MockSlugGenerator{"slug2"},
+		&mocks.MockHashGenerator{"urlhash2"},
+	}
 
 	r.POST("/", testApp.createLink)
 
@@ -52,7 +59,7 @@ func TestCreateLinkHandler(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 
-	expected := `{"status":201,"data":{"slug":"slug","url":"http://test.com","url_hash":"hash"}}`
+	expected := `{"status":201,"data":{"slug":"slug2","url":"http://test.com","url_hash":"urlhash2"}}`
 	actual := w.Body.String()
 	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
 

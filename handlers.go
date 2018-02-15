@@ -6,19 +6,30 @@ import (
 	"fmt"
 )
 
+type HashGeneratorInterface interface {
+	GenerateHash(str string) string
+}
+
+type SlugGeneratorInterface interface {
+	GenerateSlug() string
+}
+
 type App struct {
 	linkRepository linkRepositoryInterface
+	slugGenerator  SlugGeneratorInterface
+	hashGenerator  HashGeneratorInterface
 }
 
 // create short link
 func (app *App) createLink(c *gin.Context) {
 	var link linkModel
+	var createLink createLinkResource
 
-	c.BindJSON(&link)
+	c.BindJSON(&createLink)
 
-	// TODO use hasher and slug generator.
-	link.Slug = "slug"
-	link.UrlHash = "hash"
+	link.Slug = app.slugGenerator.GenerateSlug()
+	link.Url = createLink.Url
+	link.UrlHash = app.hashGenerator.GenerateHash(createLink.Url)
 
 	app.linkRepository.save(&link)
 
