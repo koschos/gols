@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"fmt"
 	"github.com/koschos/gols/generators"
+	"crypto/md5"
 )
 
 var db *gorm.DB
@@ -39,6 +40,6 @@ func createApp() *App {
 	return &App{
 		&OrmLinkRepository{*db},
 		&generators.RandomSlugGenerator{6, charset},
-		&generators.Md5HashGenerator{},
+		&generators.Md5HashGenerator{md5.New()},
 	}
 }
