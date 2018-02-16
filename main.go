@@ -5,8 +5,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"fmt"
-	"github.com/koschos/gols/generators"
 	"github.com/spf13/viper"
+	"github.com/koschos/gols/generators"
+	"github.com/koschos/gols/domain"
+	"github.com/koschos/gols/app"
 )
 
 var db *gorm.DB
@@ -22,24 +24,24 @@ func init() {
 	db = createDb(config)
 
 	//Migrate the schema
-	db.AutoMigrate(&linkModel{})
+	db.AutoMigrate(&domain.LinkModel{})
 }
 
 func main() {
-	app := createApp()
+	application := createApp()
 	router := gin.Default()
 
 	v1 := router.Group("/api/v1/short-link")
 	{
-		v1.POST("/", app.createLink)
-		v1.GET("/:slug", app.fetchLink)
+		v1.POST("/", application.CreateLink)
+		v1.GET("/:slug", application.FetchLink)
 	}
 
 	router.Run(fmt.Sprintf(":%d", config.port))
 }
 
-func createApp() *App {
-	return &App{
+func createApp() *app.App {
+	return &app.App{
 		&OrmLinkRepository{*db},
 		&generators.RandomSlugGenerator{6, charset},
 		&generators.Md5HashGenerator{},

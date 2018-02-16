@@ -1,7 +1,8 @@
-package main
+package app
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/koschos/gols/domain"
 	"net/http"
 	"fmt"
 )
@@ -15,20 +16,20 @@ type SlugGeneratorInterface interface {
 }
 
 type App struct {
-	linkRepository linkRepositoryInterface
-	slugGenerator  SlugGeneratorInterface
-	hashGenerator  HashGeneratorInterface
+	LinkRepository domain.LinkRepositoryInterface
+	SlugGenerator  SlugGeneratorInterface
+	HashGenerator  HashGeneratorInterface
 }
 
 // create short link
-func (app *App) createLink(c *gin.Context) {
-	var link linkModel
+func (app *App) CreateLink(c *gin.Context) {
+	var link domain.LinkModel
 	var createLink createLinkResource
 
 	c.BindJSON(&createLink)
 
-	urlHash := app.hashGenerator.GenerateHash(createLink.Url)
-	app.linkRepository.findByUrlHash(&link, urlHash)
+	urlHash := app.HashGenerator.GenerateHash(createLink.Url)
+	app.LinkRepository.FindByUrlHash(&link, urlHash)
 
 	if link.Slug != "" {
 		resource := linkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
@@ -41,11 +42,11 @@ func (app *App) createLink(c *gin.Context) {
 		return
 	}
 
-	link.Slug = app.slugGenerator.GenerateSlug()
+	link.Slug = app.SlugGenerator.GenerateSlug()
 	link.Url = createLink.Url
 	link.UrlHash = urlHash
 
-	app.linkRepository.save(&link)
+	app.LinkRepository.Save(&link)
 
 	resource := linkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
 
@@ -56,11 +57,11 @@ func (app *App) createLink(c *gin.Context) {
 }
 
 // fetch a single short link
-func (app *App) fetchLink(c *gin.Context) {
-	var link linkModel
+func (app *App) FetchLink(c *gin.Context) {
+	var link domain.LinkModel
 
 	slug := c.Param("slug")
-	app.linkRepository.find(&link, slug)
+	app.LinkRepository.Find(&link, slug)
 
 	if link.Slug == "" {
 		c.JSON(http.StatusNotFound, gin.H{

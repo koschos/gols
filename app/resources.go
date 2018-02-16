@@ -1,4 +1,4 @@
-package main
+package app
 
 // Output link resource
 type linkResource struct {

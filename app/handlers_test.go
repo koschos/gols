@@ -1,30 +1,30 @@
-package main
+package app
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"github.com/koschos/gols/mocks"
 	"github.com/gin-gonic/gin"
-	//"net/url"
 	"strings"
+	"github.com/koschos/gols/mocks"
+	"github.com/koschos/gols/domain"
 )
 
 func TestFetchLink(t *testing.T) {
 	r := gin.Default()
 
-	var linkList = []linkModel{
+	var linkList = []domain.LinkModel{
 		{Slug:"slug1", Url:"http://url1.com", UrlHash:"urlhash1"},
 	}
 
 	testApp := &App{
-		&InMemoryRepository{linkList},
+		&mocks.InMemoryRepository{linkList},
 		&mocks.MockSlugGenerator{},
 		&mocks.MockHashGenerator{},
 	}
 
-	r.GET("/:slug", testApp.fetchLink)
+	r.GET("/:slug", testApp.FetchLink)
 
 	req, _ := http.NewRequest("GET", "/slug1", nil)
 	w := httptest.NewRecorder()
@@ -41,16 +41,16 @@ func TestFetchLink(t *testing.T) {
 func TestCreateLink(t *testing.T) {
 	r := gin.Default()
 
-	repository := &InMemoryRepository{[]linkModel{}}
+	repository := &mocks.InMemoryRepository{[]domain.LinkModel{}}
 	testApp := &App{
 		repository,
 		&mocks.MockSlugGenerator{"slug2"},
 		&mocks.MockHashGenerator{"urlhash2"},
 	}
 
-	assert.Len(t, repository.links, 0)
+	assert.Len(t, repository.Links, 0)
 
-	r.POST("/", testApp.createLink)
+	r.POST("/", testApp.CreateLink)
 
 	body := strings.NewReader(`{"url":"http://test.com"}`)
 
@@ -65,13 +65,13 @@ func TestCreateLink(t *testing.T) {
 	actual := w.Body.String()
 	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
 
-	assert.Len(t, repository.links, 1)
+	assert.Len(t, repository.Links, 1)
 }
 
 func TestCreateAlreadyExistingLink(t *testing.T) {
 	r := gin.Default()
 
-	repository := &InMemoryRepository{[]linkModel{
+	repository := &mocks.InMemoryRepository{[]domain.LinkModel{
 		{Slug:"rand_slug1", Url:"http://test.com", UrlHash:"urlhash1"},
 	}}
 
@@ -81,9 +81,9 @@ func TestCreateAlreadyExistingLink(t *testing.T) {
 		&mocks.MockHashGenerator{"urlhash1"},
 	}
 
-	assert.Len(t, repository.links, 1)
+	assert.Len(t, repository.Links, 1)
 
-	r.POST("/", testApp.createLink)
+	r.POST("/", testApp.CreateLink)
 
 	body := strings.NewReader(`{"url":"http://test.com"}`)
 
@@ -98,5 +98,5 @@ func TestCreateAlreadyExistingLink(t *testing.T) {
 	actual := w.Body.String()
 	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
 
-	assert.Len(t, repository.links, 1)
+	assert.Len(t, repository.Links, 1)
 }
