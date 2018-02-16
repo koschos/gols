@@ -47,7 +47,7 @@ Slug generated randomly with length 6 using base 36 (a-zA-Z0-9)
 ## Run unit tests
 
 ```bash
-go test
+go test ./...
 ```
 
 ## Test manually
