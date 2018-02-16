@@ -6,11 +6,11 @@ import (
 )
 
 type Md5HashGenerator struct {
-	hasher hash.Hash
+	Hasher hash.Hash
 }
 
 func (g *Md5HashGenerator) GenerateHash(str string) string {
-	g.hasher.Write([]byte(str))
+	g.Hasher.Write([]byte(str))
 
-	return hex.EncodeToString(g.hasher.Sum(nil))
+	return hex.EncodeToString(g.Hasher.Sum(nil))
 }
