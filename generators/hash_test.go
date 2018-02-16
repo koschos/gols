@@ -3,16 +3,24 @@ package generators
 import (
 	"testing"
 	"github.com/magiconair/properties/assert"
-	"crypto/md5"
+	"fmt"
 )
 
-func TestMd5HashGenerated(t *testing.T) {
-	g := Md5HashGenerator{md5.New()}
+type testCase struct {
+	Str  string
+	Hash string
+}
 
-	cases := make(map[string]string)
-	cases["test string"] = "6f8db599de986fab7a21625b7916589c"
+func TestStateless(t *testing.T) {
+	g := Md5HashGenerator{}
 
-	for str, hash := range cases {
-		assert.Equal(t, hash, g.GenerateHash(str))
+	cases := []testCase{
+		{"test string", "6f8db599de986fab7a21625b7916589c"},
+		{"test string", "6f8db599de986fab7a21625b7916589c"},
+	}
+
+	for i, c := range cases {
+		index := i+1
+		assert.Equal(t, c.Hash, g.GenerateHash(c.Str), fmt.Sprintf("run %d failed", index))
 	}
 }
