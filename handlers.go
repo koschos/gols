@@ -27,9 +27,23 @@ func (app *App) createLink(c *gin.Context) {
 
 	c.BindJSON(&createLink)
 
+	urlHash := app.hashGenerator.GenerateHash(createLink.Url)
+	app.linkRepository.findByUrlHash(&link, urlHash)
+
+	if link.Slug != "" {
+		resource := linkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
+
+		c.JSON(http.StatusAlreadyReported, gin.H{
+			"status": http.StatusAlreadyReported,
+			"data": resource,
+		})
+
+		return
+	}
+
 	link.Slug = app.slugGenerator.GenerateSlug()
 	link.Url = createLink.Url
-	link.UrlHash = app.hashGenerator.GenerateHash(createLink.Url)
+	link.UrlHash = urlHash
 
 	app.linkRepository.save(&link)
 

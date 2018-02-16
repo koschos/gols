@@ -15,4 +15,5 @@ func (linkModel) TableName() string {
 type linkRepositoryInterface interface {
 	save(link *linkModel)
 	find(link *linkModel, slug string)
+	findByUrlHash(link *linkModel, urlHash string)
 }
