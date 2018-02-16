@@ -1,0 +1,7 @@
+port: HTTP_PORT
+db:
+  host: YOUR_HOST
+  port: YOUR_PORT
+  user: YOUR_USER
+  pass: YOUR_PASS
+  name: YOUR_DB_NAME

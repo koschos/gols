@@ -1,5 +1,0 @@
-port: 8080
-db:
-  user: root
-  pass: ~
-  name: gols
