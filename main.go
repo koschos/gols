@@ -12,24 +12,29 @@ import (
 	"github.com/koschos/gols/storage"
 )
 
-var db *gorm.DB
-var config *Config
+const (
+	configName = "config"
+	slugLength = 6
+	slugCharset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+)
 
-const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+var (
+	db *gorm.DB
+    config *Config
+)
 
 func init() {
 	//open a db connection
-	reader := ConfigReader{viper.New(), "config"}
-	config = reader.Read()
-
-	db = createDb(config)
+	bootstrap := Bootstrap{viper.New(), configName}
+	config = bootstrap.ReadConfig()
+	db = bootstrap.createDb(config)
 
 	//Migrate the schema
 	db.AutoMigrate(&domain.LinkModel{})
 }
 
 func main() {
-	slugGenerator := &generators.RandomSlugGenerator{6, charset}
+	slugGenerator := &generators.RandomSlugGenerator{slugLength, slugCharset}
 	hashGenerator := &generators.Md5HashGenerator{}
 	repository := &storage.GormLinkRepository{*db}
 
@@ -42,23 +47,4 @@ func main() {
 	}
 
 	router.Run(fmt.Sprintf(":%d", config.port))
-}
-
-func createDb(config *Config) *gorm.DB {
-	var err error
-	var dsn string
-	var dbAddress string = ""
-
-	if config.dbHost != "" {
-		dbAddress = fmt.Sprintf("%s:%d", config.dbHost, config.dbPort)
-	}
-
-	dsn = fmt.Sprintf("%s:%s@%s/%s", config.dbUser, config.dbPass, dbAddress, config.dbName)
-
-	db, err = gorm.Open("mysql", dsn)
-	if err != nil {
-		panic(fmt.Sprintf("failed to connect database. %s", err))
-	}
-
-	return db
 }
