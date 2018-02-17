@@ -1,4 +1,4 @@
-package app
+package handlers
 
 // Output link resource
 type linkResource struct {

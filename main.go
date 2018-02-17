@@ -8,7 +8,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/koschos/gols/generators"
 	"github.com/koschos/gols/domain"
-	"github.com/koschos/gols/app"
+	"github.com/koschos/gols/handlers"
+	"github.com/koschos/gols/storage"
 )
 
 var db *gorm.DB
@@ -28,24 +29,19 @@ func init() {
 }
 
 func main() {
-	application := createApp()
+	slugGenerator := &generators.RandomSlugGenerator{6, charset}
+	hashGenerator := &generators.Md5HashGenerator{}
+	repository := &storage.GormLinkRepository{*db}
+
 	router := gin.Default()
 
 	v1 := router.Group("/api/v1/short-link")
 	{
-		v1.POST("/", application.CreateLink)
-		v1.GET("/:slug", application.FetchLink)
+		v1.POST("/", handlers.CreateLinkHandler(hashGenerator, slugGenerator, repository))
+		v1.GET("/:slug", handlers.FetchLinkHandler(repository))
 	}
 
 	router.Run(fmt.Sprintf(":%d", config.port))
-}
-
-func createApp() *app.App {
-	return &app.App{
-		&OrmLinkRepository{*db},
-		&generators.RandomSlugGenerator{6, charset},
-		&generators.Md5HashGenerator{},
-	}
 }
 
 func createDb(config *Config) *gorm.DB {

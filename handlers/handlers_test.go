@@ -1,4 +1,4 @@
-package app
+package handlers
 
 import (
 	"net/http"
@@ -6,9 +6,9 @@ import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/gin-gonic/gin"
-	"strings"
 	"github.com/koschos/gols/mocks"
 	"github.com/koschos/gols/domain"
+	"strings"
 )
 
 func TestFetchLink(t *testing.T) {
@@ -18,13 +18,9 @@ func TestFetchLink(t *testing.T) {
 		{Slug:"slug1", Url:"http://url1.com", UrlHash:"urlhash1"},
 	}
 
-	testApp := &App{
-		&mocks.InMemoryRepository{linkList},
-		&mocks.MockSlugGenerator{},
-		&mocks.MockHashGenerator{},
-	}
+	repository := &mocks.InMemoryRepository{linkList}
 
-	r.GET("/:slug", testApp.FetchLink)
+	r.GET("/:slug", FetchLinkHandler(repository))
 
 	req, _ := http.NewRequest("GET", "/slug1", nil)
 	w := httptest.NewRecorder()
@@ -38,19 +34,16 @@ func TestFetchLink(t *testing.T) {
 	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
 }
 
-func TestCreateLink(t *testing.T) {
+func TestCreateNewLink(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{[]domain.LinkModel{}}
-	testApp := &App{
-		repository,
-		&mocks.MockSlugGenerator{"slug2"},
-		&mocks.MockHashGenerator{"urlhash2"},
-	}
+	hashGenerator := &mocks.MockHashGenerator{"urlhash2"}
+	slugGenerator := &mocks.MockSlugGenerator{"slug2"}
 
 	assert.Len(t, repository.Links, 0)
 
-	r.POST("/", testApp.CreateLink)
+	r.POST("/", CreateLinkHandler(hashGenerator, slugGenerator, repository))
 
 	body := strings.NewReader(`{"url":"http://test.com"}`)
 
@@ -74,16 +67,12 @@ func TestCreateAlreadyExistingLink(t *testing.T) {
 	repository := &mocks.InMemoryRepository{[]domain.LinkModel{
 		{Slug:"rand_slug1", Url:"http://test.com", UrlHash:"urlhash1"},
 	}}
-
-	testApp := &App{
-		repository,
-		&mocks.MockSlugGenerator{"rand_slug2"},
-		&mocks.MockHashGenerator{"urlhash1"},
-	}
+	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
+	slugGenerator := &mocks.MockSlugGenerator{"rand_slug2"}
 
 	assert.Len(t, repository.Links, 1)
 
-	r.POST("/", testApp.CreateLink)
+	r.POST("/", CreateLinkHandler(hashGenerator, slugGenerator, repository))
 
 	body := strings.NewReader(`{"url":"http://test.com"}`)
 
