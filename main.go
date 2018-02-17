@@ -40,6 +40,8 @@ func main() {
 
 	router := gin.Default()
 
+	router.GET("/redirect/:slug", handlers.RedirectHandler(repository))
+
 	v1 := router.Group("/api/v1/short-link")
 	{
 		v1.POST("/", handlers.CreateLinkHandler(hashGenerator, slugGenerator, repository))

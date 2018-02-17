@@ -11,6 +11,40 @@ import (
 	"strings"
 )
 
+func TestRedirect(t *testing.T) {
+	r := gin.Default()
+
+	repository := &mocks.InMemoryRepository{[]domain.LinkModel{
+		{Slug:"slug1", Url:"http://test.com", UrlHash:"urlhash1"},
+	}}
+
+	r.GET("/:slug", RedirectHandler(repository))
+
+	req, _ := http.NewRequest("GET", "/slug1", nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusMovedPermanently, w.Code)
+}
+
+func TestRedirectNotFound(t *testing.T) {
+	r := gin.Default()
+
+	repository := &mocks.InMemoryRepository{[]domain.LinkModel{
+		{Slug:"slug1", Url:"http://test.com", UrlHash:"urlhash1"},
+	}}
+
+	r.GET("/:slug", RedirectHandler(repository))
+
+	req, _ := http.NewRequest("GET", "/slug2", nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
 func TestFetchLink(t *testing.T) {
 	r := gin.Default()
 

@@ -8,6 +8,25 @@ import (
 	"github.com/koschos/gols/generators"
 )
 
+func RedirectHandler(repository domain.LinkRepositoryInterface) gin.HandlerFunc {
+	handleFunc := func(c *gin.Context) {
+		var slug string
+		var link domain.LinkModel
+
+		slug = c.Param("slug")
+
+		repository.Find(&link, slug)
+
+		if link.Slug == "" {
+			c.String(http.StatusNotFound, "Not found")
+		}
+
+		c.Redirect(http.StatusMovedPermanently, link.Url)
+	}
+
+	return gin.HandlerFunc(handleFunc)
+}
+
 func FetchLinkHandler(repository domain.LinkRepositoryInterface) gin.HandlerFunc {
 	handleFunc := func(c *gin.Context) {
 		var link domain.LinkModel

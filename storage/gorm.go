@@ -15,7 +15,7 @@ func (r *GormLinkRepository) Save(link *domain.LinkModel) {
 }
 
 func (r *GormLinkRepository) Find(link *domain.LinkModel, slug string) {
-	r.Db.First(&link, slug)
+	r.Db.First(&link, "slug = ?", slug)
 }
 
 func (r *GormLinkRepository) FindByUrlHash(link *domain.LinkModel, urlHash string) {
