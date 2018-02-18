@@ -43,7 +43,7 @@ func FetchLinkHandler(repository domain.LinkRepositoryInterface) gin.HandlerFunc
 			return
 		}
 
-		resource := linkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
+		resource := getLinkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
 		c.JSON(http.StatusOK, gin.H{
 			"status": http.StatusOK,
 			"data": resource,
@@ -65,7 +65,7 @@ func CreateLinkHandler(hashGenerator generators.HashGeneratorInterface, slugGene
 		repository.FindByUrlHash(&link, urlHash)
 
 		if link.Slug != "" {
-			resource := linkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
+			resource := getLinkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
 
 			c.JSON(http.StatusAlreadyReported, gin.H{
 				"status": http.StatusAlreadyReported,
@@ -81,7 +81,7 @@ func CreateLinkHandler(hashGenerator generators.HashGeneratorInterface, slugGene
 
 		repository.Save(&link)
 
-		resource := linkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
+		resource := getLinkResource{Slug: link.Slug, Url: link.Url, UrlHash: link.UrlHash}
 
 		c.JSON(http.StatusCreated, gin.H{
 			"status": http.StatusCreated,

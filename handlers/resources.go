@@ -1,7 +1,7 @@
 package handlers
 
 // Output link resource
-type linkResource struct {
+type getLinkResource struct {
 	Slug    string `json:"slug"`
 	Url     string `json:"url"`
 	UrlHash string `json:"url_hash"`
