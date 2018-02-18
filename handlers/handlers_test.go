@@ -43,6 +43,7 @@ func TestRedirectNotFound(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, "Not found", w.Body.String())
 }
 
 func TestFetchLink(t *testing.T) {

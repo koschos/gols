@@ -19,6 +19,8 @@ func RedirectHandler(repository domain.LinkRepositoryInterface) gin.HandlerFunc 
 
 		if link.Slug == "" {
 			c.String(http.StatusNotFound, "Not found")
+
+			return
 		}
 
 		c.Redirect(http.StatusMovedPermanently, link.Url)
