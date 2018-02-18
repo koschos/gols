@@ -34,7 +34,7 @@ func createDb() *gorm.DB {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
+		os.Getenv("DB_TEST_NAME"),
 	)
 
 	db, err := gorm.Open("mysql", dsn)
