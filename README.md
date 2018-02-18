@@ -51,7 +51,7 @@ export DB_USERNAME=root
 export DB_PASSWORD=my-secret
 export DB_HOST=127.0.0.1
 export DB_PORT=3306
-export DB_NAME=gols
+export DB_TEST_NAME=gols
 
 go test ./...
 ```
