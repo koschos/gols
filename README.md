@@ -47,6 +47,12 @@ Slug generated randomly with length 6 using base 36 (a-zA-Z0-9)
 ## Run unit tests
 
 ```bash
+export DB_USERNAME=root
+export DB_PASSWORD=my-secret
+export DB_HOST=127.0.0.1
+export DB_PORT=3306
+export DB_NAME=gols
+
 go test ./...
 ```
 
