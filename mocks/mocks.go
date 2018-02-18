@@ -21,13 +21,21 @@ func (g *MockHashGenerator) GenerateHash(str string) string {
 // In memory for testing
 type InMemoryRepository struct {
 	Links []domain.LinkModel
+	Error error
+	SaveError error
 }
 
-func (r *InMemoryRepository) Save(link *domain.LinkModel) {
-	r.Links = append(r.Links, *link)
+func (r *InMemoryRepository) Save(link *domain.LinkModel) (error) {
+	if r.SaveError == nil {
+		r.Links = append(r.Links, *link)
+	}
+
+	return r.SaveError
 }
 
-func (r *InMemoryRepository) Find(link *domain.LinkModel, slug string) {
+func (r *InMemoryRepository) Find(slug string) (*domain.LinkModel, error) {
+	var link = &domain.LinkModel{}
+
 	for _, l := range r.Links {
 		if l.Slug == slug {
 			link.Slug = l.Slug
@@ -35,9 +43,13 @@ func (r *InMemoryRepository) Find(link *domain.LinkModel, slug string) {
 			link.UrlHash = l.UrlHash
 		}
 	}
+
+	return link, r.Error
 }
 
-func (r *InMemoryRepository) FindByUrlHash(link *domain.LinkModel, urlHash string) {
+func (r *InMemoryRepository) FindByUrlHash(urlHash string) (*domain.LinkModel, error) {
+	var link = &domain.LinkModel{}
+
 	for _, l := range r.Links {
 		if l.UrlHash == urlHash {
 			link.Slug = l.Slug
@@ -45,4 +57,6 @@ func (r *InMemoryRepository) FindByUrlHash(link *domain.LinkModel, urlHash strin
 			link.UrlHash = l.UrlHash
 		}
 	}
+
+	return link, r.Error
 }

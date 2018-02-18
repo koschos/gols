@@ -8,21 +8,24 @@ import (
 )
 
 func TestSaveAndFind(t *testing.T) {
+	var err error
 
 	link := domain.LinkModel{"slug1", "url1", "urlhash1"}
 
 	db := createDb()
 	repository := GormLinkRepository{*db}
 
-	repository.Save(&link)
+	// test Save
+	err = repository.Save(&link)
+	assert.Nil(t, err, "Save() returns error")
 
-	link = domain.LinkModel{}
-	repository.Find(&link, "slug1")
+	// test Find
+	link1, err := repository.Find("slug1")
+	assert.Nil(t, err, "Find() returns error")
+	assert.Equal(t, "slug1", link1.Slug, "not found by slug 'slug1'")
 
-	assert.Equal(t, "slug1", link.Slug, "not found by slug 'slug1'")
-
-	link = domain.LinkModel{}
-	repository.FindByUrlHash(&link, "urlhash1")
-
-	assert.Equal(t, "urlhash1", link.UrlHash, "not found by url_hash 'urlhash1'")
+	// test FindByUrlHash
+	link2, err := repository.FindByUrlHash("urlhash1")
+	assert.Nil(t, err, "FindByUrlHash() returns error")
+	assert.Equal(t, "urlhash1", link2.UrlHash, "not found by url_hash 'urlhash1'")
 }

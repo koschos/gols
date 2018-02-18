@@ -13,7 +13,7 @@ func (LinkModel) TableName() string {
 
 // Repository
 type LinkRepositoryInterface interface {
-	Save(link *LinkModel)
-	Find(link *LinkModel, slug string)
-	FindByUrlHash(link *LinkModel, urlHash string)
+	Save(link *LinkModel) (error)
+	Find(slug string) (*LinkModel, error)
+	FindByUrlHash(urlHash string) (*LinkModel, error)
 }

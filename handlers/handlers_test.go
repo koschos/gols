@@ -9,14 +9,17 @@ import (
 	"github.com/koschos/gols/mocks"
 	"github.com/koschos/gols/domain"
 	"strings"
+	"errors"
 )
 
-func TestRedirect(t *testing.T) {
+func TestRedirect301(t *testing.T) {
 	r := gin.Default()
 
-	repository := &mocks.InMemoryRepository{[]domain.LinkModel{
-		{Slug:"slug1", Url:"http://test.com", UrlHash:"urlhash1"},
-	}}
+	repository := &mocks.InMemoryRepository{
+		Links: []domain.LinkModel{
+			{Slug:"slug1", Url:"http://test.com", UrlHash:"urlhash1"},
+		},
+	}
 
 	r.GET("/:slug", RedirectHandler(repository))
 
@@ -28,12 +31,14 @@ func TestRedirect(t *testing.T) {
 	assert.Equal(t, http.StatusMovedPermanently, w.Code)
 }
 
-func TestRedirectNotFound(t *testing.T) {
+func TestRedirect404(t *testing.T) {
 	r := gin.Default()
 
-	repository := &mocks.InMemoryRepository{[]domain.LinkModel{
-		{Slug:"slug1", Url:"http://test.com", UrlHash:"urlhash1"},
-	}}
+	repository := &mocks.InMemoryRepository{
+		Links: []domain.LinkModel{
+			{Slug:"slug1", Url:"http://test.com", UrlHash:"urlhash1"},
+		},
+	}
 
 	r.GET("/:slug", RedirectHandler(repository))
 
@@ -46,33 +51,27 @@ func TestRedirectNotFound(t *testing.T) {
 	assert.Equal(t, "Not found", w.Body.String())
 }
 
-func TestFetchLink(t *testing.T) {
+func TestRedirect500r(t *testing.T) {
 	r := gin.Default()
 
-	var linkList = []domain.LinkModel{
-		{Slug:"slug1", Url:"http://url1.com", UrlHash:"urlhash1"},
+	repository := &mocks.InMemoryRepository{
+		Error: errors.New("db error"),
 	}
 
-	repository := &mocks.InMemoryRepository{linkList}
-
-	r.GET("/:slug", FetchLinkHandler(repository))
+	r.GET("/:slug", RedirectHandler(repository))
 
 	req, _ := http.NewRequest("GET", "/slug1", nil)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	expected := `{"status":200,"data":{"slug":"slug1","url":"http://url1.com","url_hash":"urlhash1"}}`
-	actual := w.Body.String()
-	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
-func TestCreateNewLink(t *testing.T) {
+func TestCreateLink201(t *testing.T) {
 	r := gin.Default()
 
-	repository := &mocks.InMemoryRepository{[]domain.LinkModel{}}
+	repository := &mocks.InMemoryRepository{Links: []domain.LinkModel{}}
 	hashGenerator := &mocks.MockHashGenerator{"urlhash2"}
 	slugGenerator := &mocks.MockSlugGenerator{"slug2"}
 
@@ -96,12 +95,15 @@ func TestCreateNewLink(t *testing.T) {
 	assert.Len(t, repository.Links, 1)
 }
 
-func TestCreateAlreadyExistingLink(t *testing.T) {
+func TestCreateLink208(t *testing.T) {
 	r := gin.Default()
 
-	repository := &mocks.InMemoryRepository{[]domain.LinkModel{
-		{Slug:"rand_slug1", Url:"http://test.com", UrlHash:"urlhash1"},
-	}}
+	repository := &mocks.InMemoryRepository{
+		Links:[]domain.LinkModel{
+			{Slug:"rand_slug1", Url:"http://test.com", UrlHash:"urlhash1"},
+		},
+	}
+
 	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
 	slugGenerator := &mocks.MockSlugGenerator{"rand_slug2"}
 
@@ -123,4 +125,52 @@ func TestCreateAlreadyExistingLink(t *testing.T) {
 	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
 
 	assert.Len(t, repository.Links, 1)
+}
+
+func TestCreateLink500FindError(t *testing.T) {
+	r := gin.Default()
+
+	repository := &mocks.InMemoryRepository{
+		Error: errors.New("db error"),
+	}
+
+	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
+	slugGenerator := &mocks.MockSlugGenerator{"rand_slug2"}
+
+	r.POST("/", CreateLinkHandler(hashGenerator, slugGenerator, repository))
+
+	body := strings.NewReader(`{"url":"http://test.com"}`)
+
+	req, _ := http.NewRequest("POST", "/", body)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Equal(t, "FindByUrlHash error", w.Body.String())
+	assert.Len(t, repository.Links, 0)
+}
+
+func TestCreateLink500SaveError(t *testing.T) {
+	r := gin.Default()
+
+	repository := &mocks.InMemoryRepository{
+		SaveError: errors.New("db error"),
+	}
+
+	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
+	slugGenerator := &mocks.MockSlugGenerator{"rand_slug2"}
+
+	r.POST("/", CreateLinkHandler(hashGenerator, slugGenerator, repository))
+
+	body := strings.NewReader(`{"url":"http://test.com"}`)
+
+	req, _ := http.NewRequest("POST", "/", body)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Equal(t, "Save error", w.Body.String())
+	assert.Len(t, repository.Links, 0)
 }

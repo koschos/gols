@@ -34,6 +34,8 @@ func init() {
 }
 
 func main() {
+	defer db.Close()
+
 	slugGenerator := &generators.RandomSlugGenerator{slugLength, slugCharset}
 	hashGenerator := &generators.Md5HashGenerator{}
 	repository := &storage.GormLinkRepository{*db}
@@ -42,10 +44,9 @@ func main() {
 
 	router.GET("/redirect/:slug", handlers.RedirectHandler(repository))
 
-	v1 := router.Group("/api/v1/short-link")
+	api := router.Group("/api/short-link")
 	{
-		v1.POST("/", handlers.CreateLinkHandler(hashGenerator, slugGenerator, repository))
-		v1.GET("/:slug", handlers.FetchLinkHandler(repository))
+		api.POST("/", handlers.CreateLinkHandler(hashGenerator, slugGenerator, repository))
 	}
 
 	router.Run(fmt.Sprintf(":%d", config.port))
