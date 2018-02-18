@@ -3,11 +3,14 @@ package mocks
 import "github.com/koschos/gols/domain"
 
 type MockSlugGenerator struct {
-	Slug string
+	Slugs []string
 }
 
 func (g *MockSlugGenerator) GenerateSlug() string {
-	return g.Slug
+	slug := g.Slugs[0]
+	g.Slugs = g.Slugs[1:]
+
+	return slug
 }
 
 type MockHashGenerator struct {
@@ -26,9 +29,14 @@ type InMemoryRepository struct {
 }
 
 func (r *InMemoryRepository) Create(link *domain.LinkModel) (error) {
-	if r.CreateError == nil {
-		r.Links = append(r.Links, *link)
+	if r.CreateError != nil {
+		err := r.CreateError
+		r.CreateError = nil
+
+		return err
 	}
+
+	r.Links = append(r.Links, *link)
 
 	return r.CreateError
 }

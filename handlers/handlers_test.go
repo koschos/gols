@@ -10,9 +10,10 @@ import (
 	"github.com/koschos/gols/domain"
 	"strings"
 	"errors"
+	"github.com/go-sql-driver/mysql"
 )
 
-func TestRedirect301(t *testing.T) {
+func TestRedirect_301(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
@@ -31,7 +32,7 @@ func TestRedirect301(t *testing.T) {
 	assert.Equal(t, http.StatusMovedPermanently, w.Code)
 }
 
-func TestRedirect404(t *testing.T) {
+func TestRedirect_404(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
@@ -51,7 +52,7 @@ func TestRedirect404(t *testing.T) {
 	assert.Equal(t, "Not found", w.Body.String())
 }
 
-func TestRedirect500r(t *testing.T) {
+func TestRedirect_500(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
@@ -68,12 +69,32 @@ func TestRedirect500r(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
-func TestCreateLink201(t *testing.T) {
+func TestCreateLink_400_BadRequest(t *testing.T) {
+	r := gin.Default()
+
+	repository := &mocks.InMemoryRepository{Links: []domain.LinkModel{}}
+	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
+	slugGenerator := &mocks.MockSlugGenerator{[]string{"slug1"}}
+
+	r.POST("/", CreateLinkHandler(hashGenerator, slugGenerator, repository))
+
+	body := strings.NewReader(`{"wrong":"test"}`)
+
+	req, _ := http.NewRequest("POST", "/", body)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Len(t, repository.Links, 0)
+}
+
+func TestCreateLink_201(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{Links: []domain.LinkModel{}}
 	hashGenerator := &mocks.MockHashGenerator{"urlhash2"}
-	slugGenerator := &mocks.MockSlugGenerator{"slug2"}
+	slugGenerator := &mocks.MockSlugGenerator{[]string{"slug2"}}
 
 	assert.Len(t, repository.Links, 0)
 
@@ -95,7 +116,35 @@ func TestCreateLink201(t *testing.T) {
 	assert.Len(t, repository.Links, 1)
 }
 
-func TestCreateLink208(t *testing.T) {
+func TestCreateLink_201_MySql1062Duplicated(t *testing.T) {
+	r := gin.Default()
+
+	repository := &mocks.InMemoryRepository{
+		CreateError: &mysql.MySQLError{Number: 1062},
+	}
+
+	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
+	slugGenerator := &mocks.MockSlugGenerator{[]string{"rand_slug1", "rand_slug2"}}
+
+	r.POST("/", CreateLinkHandler(hashGenerator, slugGenerator, repository))
+
+	body := strings.NewReader(`{"url":"http://test.com"}`)
+
+	req, _ := http.NewRequest("POST", "/", body)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	expected := `{"status":201,"data":{"slug":"rand_slug2","url":"http://test.com","url_hash":"urlhash1"}}`
+	actual := w.Body.String()
+	assert.JSONEq(t, expected, actual, "handler returned unexpected body: got %v want %v", expected, actual)
+
+	assert.Len(t, repository.Links, 1)
+}
+
+func TestCreateLink_208(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
@@ -105,7 +154,7 @@ func TestCreateLink208(t *testing.T) {
 	}
 
 	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
-	slugGenerator := &mocks.MockSlugGenerator{"rand_slug2"}
+	slugGenerator := &mocks.MockSlugGenerator{[]string{"rand_slug2"}}
 
 	assert.Len(t, repository.Links, 1)
 
@@ -127,7 +176,7 @@ func TestCreateLink208(t *testing.T) {
 	assert.Len(t, repository.Links, 1)
 }
 
-func TestCreateLink500FindError(t *testing.T) {
+func TestCreateLink_500_FindError(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
@@ -135,7 +184,7 @@ func TestCreateLink500FindError(t *testing.T) {
 	}
 
 	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
-	slugGenerator := &mocks.MockSlugGenerator{"rand_slug2"}
+	slugGenerator := &mocks.MockSlugGenerator{[]string{"rand_slug2"}}
 
 	r.POST("/", CreateLinkHandler(hashGenerator, slugGenerator, repository))
 
@@ -151,7 +200,7 @@ func TestCreateLink500FindError(t *testing.T) {
 	assert.Len(t, repository.Links, 0)
 }
 
-func TestCreateLink500CreateError(t *testing.T) {
+func TestCreateLink_500_CreateError(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
@@ -159,7 +208,7 @@ func TestCreateLink500CreateError(t *testing.T) {
 	}
 
 	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
-	slugGenerator := &mocks.MockSlugGenerator{"rand_slug2"}
+	slugGenerator := &mocks.MockSlugGenerator{[]string{"rand_slug2"}}
 
 	r.POST("/", CreateLinkHandler(hashGenerator, slugGenerator, repository))
 

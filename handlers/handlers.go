@@ -5,7 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/koschos/gols/domain"
 	"github.com/koschos/gols/generators"
+	"github.com/go-sql-driver/mysql"
 )
+
+const duplicateEntryErrorNumber = 1062
 
 func RedirectHandler(repository domain.LinkRepositoryInterface) gin.HandlerFunc {
 	handleFunc := func(c *gin.Context) {
@@ -32,14 +35,25 @@ func RedirectHandler(repository domain.LinkRepositoryInterface) gin.HandlerFunc 
 	return gin.HandlerFunc(handleFunc)
 }
 
-func CreateLinkHandler(hashGenerator generators.HashGeneratorInterface, slugGenerator generators.SlugGeneratorInterface, repository domain.LinkRepositoryInterface) gin.HandlerFunc {
+func CreateLinkHandler(
+	hashGenerator generators.HashGeneratorInterface,
+	slugGenerator generators.SlugGeneratorInterface,
+	repository domain.LinkRepositoryInterface) gin.HandlerFunc {
+
 	handleFunc := func(c *gin.Context) {
 
 		var createLink CreateLinkResource
 
-		c.BindJSON(&createLink)
+		err := c.BindJSON(&createLink)
+
+		if err != nil || createLink.Url == "" {
+			c.String(http.StatusBadRequest, "Bad request")
+
+			return
+		}
 
 		urlHash := hashGenerator.GenerateHash(createLink.Url)
+
 		link, err := repository.FindByUrlHash(urlHash)
 
 		if err != nil {
@@ -57,13 +71,25 @@ func CreateLinkHandler(hashGenerator generators.HashGeneratorInterface, slugGene
 			return
 		}
 
-		link.Slug = slugGenerator.GenerateSlug()
 		link.Url = createLink.Url
 		link.UrlHash = urlHash
 
-		err = repository.Create(link)
+		// Create link, skip duplicated errors.
+		for {
 
-		if err != nil {
+			link.Slug = slugGenerator.GenerateSlug()
+
+			err = repository.Create(link)
+
+			// stop on first success
+			if err == nil {
+				break
+			}
+
+			if isDuplicateEntryError(err) {
+				continue
+			}
+
 			c.String(http.StatusInternalServerError, "Create error")
 
 			return
@@ -76,4 +102,10 @@ func CreateLinkHandler(hashGenerator generators.HashGeneratorInterface, slugGene
 	}
 
 	return gin.HandlerFunc(handleFunc)
+}
+
+func isDuplicateEntryError(err error) bool {
+	mySqlError, ok := err.(*mysql.MySQLError)
+
+	return ok && int(mySqlError.Number) == duplicateEntryErrorNumber
 }
