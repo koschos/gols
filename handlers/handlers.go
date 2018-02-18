@@ -9,6 +9,7 @@ import (
 )
 
 const duplicateEntryErrorNumber = 1062
+const maxCreateTries = 10
 
 func RedirectHandler(repository domain.LinkRepositoryInterface) gin.HandlerFunc {
 	handleFunc := func(c *gin.Context) {
@@ -75,7 +76,9 @@ func CreateLinkHandler(
 		link.UrlHash = urlHash
 
 		// Create link, skip duplicated errors.
-		for {
+		createTries := 1
+
+		for createTries < maxCreateTries {
 
 			link.Slug = slugGenerator.GenerateSlug()
 
@@ -87,10 +90,18 @@ func CreateLinkHandler(
 			}
 
 			if isDuplicateEntryError(err) {
+				createTries += 1
+
 				continue
 			}
 
 			c.String(http.StatusInternalServerError, "Create error")
+
+			return
+		}
+
+		if createTries >= maxCreateTries {
+			c.String(http.StatusInternalServerError, "Max create tries count exceeded")
 
 			return
 		}

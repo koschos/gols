@@ -7,6 +7,10 @@ type MockSlugGenerator struct {
 }
 
 func (g *MockSlugGenerator) GenerateSlug() string {
+	if len(g.Slugs) == 0 {
+		return ""
+	}
+
 	slug := g.Slugs[0]
 	g.Slugs = g.Slugs[1:]
 
