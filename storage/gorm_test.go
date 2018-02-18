@@ -2,12 +2,12 @@ package storage
 
 import (
 	"testing"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/koschos/gols/domain"
 	"github.com/stretchr/testify/assert"
+	"github.com/go-sql-driver/mysql"
 )
 
-func TestSaveAndFind(t *testing.T) {
+func TestCreateAndFind(t *testing.T) {
 	var err error
 
 	link := domain.LinkModel{"slug1", "url1", "urlhash1"}
@@ -15,9 +15,15 @@ func TestSaveAndFind(t *testing.T) {
 	db := createDb()
 	repository := GormLinkRepository{*db}
 
-	// test Save
-	err = repository.Save(&link)
-	assert.Nil(t, err, "Save() returns error")
+	// test Create
+	err = repository.Create(&link)
+	assert.Nil(t, err, "Create() returns error")
+
+	// test Create duplicated
+	err = repository.Create(&link)
+	mySqlError, ok := err.(*mysql.MySQLError)
+	assert.True(t, ok)
+	assert.Equal(t, 1062, int(mySqlError.Number))
 
 	// test Find
 	link1, err := repository.Find("slug1")

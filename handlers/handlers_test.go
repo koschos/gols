@@ -151,11 +151,11 @@ func TestCreateLink500FindError(t *testing.T) {
 	assert.Len(t, repository.Links, 0)
 }
 
-func TestCreateLink500SaveError(t *testing.T) {
+func TestCreateLink500CreateError(t *testing.T) {
 	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
-		SaveError: errors.New("db error"),
+		CreateError: errors.New("db error"),
 	}
 
 	hashGenerator := &mocks.MockHashGenerator{"urlhash1"}
@@ -171,6 +171,6 @@ func TestCreateLink500SaveError(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	assert.Equal(t, "Save error", w.Body.String())
+	assert.Equal(t, "Create error", w.Body.String())
 	assert.Len(t, repository.Links, 0)
 }

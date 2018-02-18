@@ -20,17 +20,17 @@ func (g *MockHashGenerator) GenerateHash(str string) string {
 
 // In memory for testing
 type InMemoryRepository struct {
-	Links []domain.LinkModel
-	Error error
-	SaveError error
+	Links       []domain.LinkModel
+	Error       error
+	CreateError error
 }
 
-func (r *InMemoryRepository) Save(link *domain.LinkModel) (error) {
-	if r.SaveError == nil {
+func (r *InMemoryRepository) Create(link *domain.LinkModel) (error) {
+	if r.CreateError == nil {
 		r.Links = append(r.Links, *link)
 	}
 
-	return r.SaveError
+	return r.CreateError
 }
 
 func (r *InMemoryRepository) Find(slug string) (*domain.LinkModel, error) {

@@ -61,10 +61,10 @@ func CreateLinkHandler(hashGenerator generators.HashGeneratorInterface, slugGene
 		link.Url = createLink.Url
 		link.UrlHash = urlHash
 
-		err = repository.Save(link)
+		err = repository.Create(link)
 
 		if err != nil {
-			c.String(http.StatusInternalServerError, "Save error")
+			c.String(http.StatusInternalServerError, "Create error")
 
 			return
 		}

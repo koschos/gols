@@ -10,8 +10,8 @@ type GormLinkRepository struct {
 	Db gorm.DB
 }
 
-func (r *GormLinkRepository) Save(link *domain.LinkModel) (error) {
-	return r.Db.Save(&link).Error
+func (r *GormLinkRepository) Create(link *domain.LinkModel) (error) {
+	return r.Db.Create(&link).Error
 }
 
 func (r *GormLinkRepository) Find(slug string) (*domain.LinkModel, error) {
