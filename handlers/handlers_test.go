@@ -14,7 +14,6 @@ import (
 )
 
 func TestRedirect_301(t *testing.T) {
-	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
 		Links: []domain.LinkModel{
@@ -22,18 +21,12 @@ func TestRedirect_301(t *testing.T) {
 		},
 	}
 
-	r.GET("/:slug", RedirectHandler(repository))
-
-	req, _ := http.NewRequest("GET", "/slug1", nil)
-	w := httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
+	w := doRedirect("slug1", repository)
 
 	assert.Equal(t, http.StatusMovedPermanently, w.Code)
 }
 
 func TestRedirect_404(t *testing.T) {
-	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
 		Links: []domain.LinkModel{
@@ -41,30 +34,19 @@ func TestRedirect_404(t *testing.T) {
 		},
 	}
 
-	r.GET("/:slug", RedirectHandler(repository))
-
-	req, _ := http.NewRequest("GET", "/slug2", nil)
-	w := httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
+	w := doRedirect("slug2", repository)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 	assert.Equal(t, "Not found", w.Body.String())
 }
 
 func TestRedirect_500(t *testing.T) {
-	r := gin.Default()
 
 	repository := &mocks.InMemoryRepository{
 		Error: errors.New("db error"),
 	}
 
-	r.GET("/:slug", RedirectHandler(repository))
-
-	req, _ := http.NewRequest("GET", "/slug1", nil)
-	w := httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
+	w := doRedirect("slug1", repository)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
@@ -222,4 +204,17 @@ func TestCreateLink_500_CreateError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Equal(t, "Create error", w.Body.String())
 	assert.Len(t, repository.Links, 0)
+}
+
+func doRedirect(slug string, repository domain.LinkRepositoryInterface) *httptest.ResponseRecorder  {
+	r := gin.Default()
+
+	r.GET("/:slug", RedirectHandler(repository))
+
+	req, _ := http.NewRequest("GET", "/" + slug, nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	return w
 }
