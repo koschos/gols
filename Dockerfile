@@ -8,7 +8,6 @@ COPY . $GOPATH/src/github.com/koschos/gols
 
 RUN go get -d -v
 
-#RUN go build -o /go/bin/gols
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /go/bin/gols
 
 FROM scratch
@@ -17,5 +16,4 @@ COPY --from=build /go/bin/gols /main
 
 EXPOSE 50000
 
-# Run the gols binary.
 ENTRYPOINT ["/main"]
